@@ -49,6 +49,7 @@
 // #define RGB
 // #define RGBW
 // #define RGBWW
+// #define SOK
 // #define IR_REMOTE
 // #define RF_REMOTE
 // #define DEVICE_MODEL                           "LC0X"

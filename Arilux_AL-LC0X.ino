@@ -14,6 +14,11 @@
 #include <RCSwitch.h>         // https://github.com/sui77/rc-switch
 #endif
 #include <ArduinoOTA.h>
+//OTA via webserver
+#include <ESP8266HTTPUpdateServer.h>
+#include <ESP8266WebServer.h>
+#include <ESP8266mDNS.h>
+//end OTA webserver
 #if defined(HOME_ASSISTANT_MQTT_DISCOVERY) || defined (JSON)
   #include <ArduinoJson.h>
 #endif
@@ -88,6 +93,9 @@ WiFiClientSecure  wifiClient;
 WiFiClient        wifiClient;
 #endif
 PubSubClient        mqttClient(wifiClient);
+
+ESP8266WebServer httpServer(80);
+ESP8266HTTPUpdateServer httpUpdater;
 
 // Real values to write to the LEDs (ex. including brightness and state)
 byte realRed = 0;
@@ -968,6 +976,12 @@ void setup() {
     else if (error == OTA_END_ERROR) DEBUG_PRINTLN("End Failed");
   });
   ArduinoOTA.begin();
+  // OTA web server
+    MDNS.begin(MQTT_CLIENT_ID);
+    httpUpdater.setup(&httpServer);
+    httpServer.begin();
+    MDNS.addService("http", "tcp", 80); 
+    Serial.printf("HTTPUpdateServer ready! Open http://%s.local/update in your browser\n", MQTT_CLIENT_ID); 
 }
 
 void loop() {
@@ -1014,5 +1028,7 @@ void loop() {
   handleCMD();
   yield();
   ArduinoOTA.handle();
+  yield();
+  httpServer.handleClient();
   yield();
 }
