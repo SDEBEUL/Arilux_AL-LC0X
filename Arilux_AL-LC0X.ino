@@ -113,6 +113,10 @@ byte flashGreen = 0;
 byte flashBlue = 0;
 byte flashBrightness = 0;
 
+// Globals for SOK
+bool buttonState = HIGH;         // current state of the button
+bool last_button_state = LOW;   // previous state of the button
+
 ///////////////////////////////////////////////////////////////////////////
 //  SSL/TLS
 ///////////////////////////////////////////////////////////////////////////
@@ -813,13 +817,15 @@ void handleCMD(void) {
       JsonObject& root = outgoingJsonPayload.createObject();
       String stringState = arilux.getState() ? "ON" : "OFF";
       root["state"] = stringState;
-      root["brightness"] = arilux.getBrightness();
-      // root["transition"] =
-      root["white_value"] = arilux.getWhite1Value();
-      JsonObject& color = root.createNestedObject("color");
-      color["r"] = arilux.getRedValue();
-      color["g"] = arilux.getGreenValue();
-      color["b"] = arilux.getBlueValue();
+      #ifndef SOK
+        root["brightness"] = arilux.getBrightness();
+        // root["transition"] =
+        root["white_value"] = arilux.getWhite1Value();
+        JsonObject& color = root.createNestedObject("color");
+        color["r"] = arilux.getRedValue();
+        color["g"] = arilux.getGreenValue();
+        color["b"] = arilux.getBlueValue();
+      #endif
       root.printTo(outgoingJsonBuffer);
       publishToMQTT(ARILUX_MQTT_JSON_STATE_TOPIC, outgoingJsonBuffer);
   };
@@ -978,6 +984,25 @@ void loop() {
 #ifdef RF_REMOTE
   // Handle received RF codes from the remote
   handleRFRemote();
+#endif
+
+#ifdef SOK
+  // Hanlde button pushed
+   yield();
+   buttonState = digitalRead(SOK_BUTTON_PIN);
+   if(buttonState == LOW && last_button_state == HIGH)
+   {      
+    if (arilux.getState() == true)
+      {
+        arilux.turnOff();
+      }
+      else
+      {
+        arilux.turnOn();
+      }
+      cmd = ARILUX_CMD_STATE_CHANGED; 
+    }
+   last_button_state = buttonState;
 #endif
 
   yield();

@@ -33,7 +33,11 @@ uint8_t Arilux::init(void) {
 #endif
   analogWriteFreq(ARILUX_PWM_FREQUENCY);
   analogWriteRange(ARILUX_PWM_RANGE);
-
+#ifdef SOK
+  pinMode(SOK_RELAY_PIN,OUTPUT); 
+  pinMode(SOK_LED_PIN,OUTPUT); 
+  pinMode(SOK_BUTTON_PIN,INPUT);
+#endif
   return true;
 }
 
@@ -54,11 +58,20 @@ char *Arilux::getColorString(void) {
 }
 
 uint8_t Arilux::setState(uint8_t p_state) {
+  
   if (p_state == true) {
     m_state = true;
+    #ifdef SOK
+      digitalWrite(SOK_RELAY_PIN,HIGH);
+      digitalWrite(SOK_LED_PIN,HIGH);
+    #endif
     return setAll(m_color.red, m_color.green, m_color.blue, m_color.white1, m_color.white2, false);
   } else {
     m_state = false;
+    #ifdef SOK
+     digitalWrite(SOK_RELAY_PIN,LOW);
+     digitalWrite(SOK_LED_PIN,LOW);
+    #endif
     return setAll(0, 0, 0, 0, 0, false);
   }
 }
@@ -175,6 +188,7 @@ uint8_t Arilux::setAll(uint8_t p_red, uint8_t p_green, uint8_t p_blue, uint8_t p
   analogWrite(m_white2Pin, map(p_white2, 0, ARILUX_PWM_RANGE, 0, m_brightness));
 #endif
 #endif
+
   return true;
 }
 uint8_t Arilux::setColor(uint8_t p_red, uint8_t p_green, uint8_t p_blue, uint8_t p_retain) {
@@ -183,4 +197,3 @@ uint8_t Arilux::setColor(uint8_t p_red, uint8_t p_green, uint8_t p_blue, uint8_t
 uint8_t Arilux::setWhite( uint8_t p_white1, uint8_t p_white2, uint8_t p_retain) {
   return setAll(getRedValue(), getGreenValue(), getBlueValue(), p_white1, p_white2, p_retain);
 }
-
